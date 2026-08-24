@@ -1,4 +1,6 @@
 use std::path::PathBuf;
+use crate::error::Error;
+
 pub struct Arguments{
     pub url : String,
     pub dest_path : Option<PathBuf>,
@@ -6,7 +8,7 @@ pub struct Arguments{
     pub version : bool,
 }
 
-pub fn parse_args(args: &[String]) -> Result<Arguments, String> {
+pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
     if args.len() == 2 {
         match args[1].as_str() {
             "--help" | "-h" => {
@@ -46,6 +48,6 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, String> {
             version: false,
         }),
 
-        _ => Err(String::from("Invalid format")),
+        _ => Err(Error::InvalidArguments),
     }
 }
