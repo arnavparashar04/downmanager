@@ -3,7 +3,9 @@ mod downloader;
 mod error;
 mod headers;
 mod http;
-fn main() {
+fn main() -> Result<(), String> {
     let args : Vec<String>  = std::env::args().collect();
-    println!("{:?}", args);
-}
+    let parsed_args : cli::Arguments = cli::parse_args(&args)?;
+    println!("{}", parsed_args.url);
+    Ok(())
+}    
