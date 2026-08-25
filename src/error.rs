@@ -1,3 +1,5 @@
+use std::io;
+
 #[derive(Debug)]
 pub enum Error {
    InvalidArguments,
@@ -7,6 +9,7 @@ pub enum Error {
    InvalidUrl,
    UnsupportedDownloadUrl(String),
    TempNotFound,
-   TerminalSize
+   TerminalSize,
+   File(std::io::Error)
 }
 

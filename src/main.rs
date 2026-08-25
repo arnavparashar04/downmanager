@@ -1,7 +1,6 @@
 mod cli;
 mod downloader;
 mod error;
-mod headers;
 mod http;
 
 const VERSION : &str = "0.0.1";
