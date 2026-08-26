@@ -2,8 +2,9 @@ mod cli;
 mod downloader;
 mod error;
 mod http;
+use std::path::Path; 
 
-const VERSION : &str = "0.0.1";
+const VERSION : &str = "1.0.0";
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
@@ -13,7 +14,7 @@ async fn main() -> Result<(), error::Error> {
         println!("{}", VERSION);
     }
     if !parsed_args.url.is_empty(){
-        http::get(&parsed_args.url).await?;
+        downloader::download(&parsed_args.url, Path::new("test")).await?;
     } 
     Ok(())
 }    

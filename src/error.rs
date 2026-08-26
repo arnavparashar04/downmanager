@@ -10,6 +10,7 @@ pub enum Error {
    UnsupportedDownloadUrl(String),
    TempNotFound,
    TerminalSize,
-   File(std::io::Error)
+   File(std::io::Error),
+   NetworkStatus(reqwest::StatusCode)
 }
 
