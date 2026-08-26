@@ -5,7 +5,7 @@ use crate::http;
 use std::time::Instant;
 use crate::error::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DownloadProgress{
     pub status : DownloadStatus,
     pub http_status : Option<reqwest::StatusCode>,
@@ -15,7 +15,7 @@ pub struct DownloadProgress{
     pub started_at: Option<Instant>,
     pub last_bytestream: Option<Instant> 
 }
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum DownloadStatus{
     Connecting,
     Downloading,
@@ -29,7 +29,7 @@ impl DownloadProgress{
     pub fn new() -> Self{
         Self{
             status: DownloadStatus::Connecting,
-            http_status: None, // temporary
+            http_status: None, 
             connections: 0,
             total_size: None,
             downloaded_size: 0,
@@ -43,21 +43,24 @@ fn init_file(dest: &Path) -> Result<std::fs::File, Error>{
     let fileout = std::fs::File::create_new(dest).map_err(Error::File)?;
     Ok(fileout)
 }
-pub async fn download(url: &str, out : &Path, progress: &mut DownloadProgress) -> Result<(), Error>{
+pub async fn download(url: &str, out : &Path, transmitter: tokio::sync::watch::Sender<DownloadProgress>) -> Result<(), Error>{
+    let mut progress = DownloadProgress::new();
+    transmitter.send(progress.clone()).map_err(|_| Error::Channel)?; //for connecting state
     let response = http::get(url).await?;
     progress.http_status = Some(response.status());
-    progress.total_size = response.content_length();
-    progress.connections = 1; 
+    progress.total_size = response.content_length(); 
     if !response.status().is_success(){
         return Err(Error::NetworkStatus(response.status()))
     }
+    progress.connections = 1;
+    transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
     let mut fileout = init_file(out)?;
-    download_stream(response, &mut fileout, progress).await?; 
+    download_stream(response, &mut fileout, &mut progress, &transmitter).await?; 
     Ok(())
 
 }
 
-async fn download_stream(response: reqwest::Response, fileout: &mut std::fs::File, progress: &mut DownloadProgress) -> Result< (), Error>{ 
+async fn download_stream(response: reqwest::Response, fileout: &mut std::fs::File, progress: &mut DownloadProgress, transmitter: &tokio::sync::watch::Sender<DownloadProgress>) -> Result< (), Error>{ 
     let mut stream = response.bytes_stream();
     while let Some(chunk) = stream.next().await{
         let chunk = chunk.map_err(Error::Network)?; //since chunk is still type result<> from reqwest
@@ -70,6 +73,10 @@ async fn download_stream(response: reqwest::Response, fileout: &mut std::fs::Fil
             progress.started_at = Some(thischunktime);
             progress.status = DownloadStatus::Downloading;
         }
+        transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
     }
+    progress.status = DownloadStatus::Completed;
+    progress.connections = 0;
+    transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
     Ok(())
 }

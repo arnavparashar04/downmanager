@@ -4,7 +4,7 @@ mod error;
 mod http;
 use std::path::Path; 
 
-const VERSION : &str = "1.0.0";
+const VERSION : &str = "1.4.0";
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
@@ -14,10 +14,11 @@ async fn main() -> Result<(), error::Error> {
         println!("{}", VERSION);
     }
 
-    let mut progress = downloader::DownloadProgress::new();
-
     if !parsed_args.url.is_empty(){
-        downloader::download(&parsed_args.url, Path::new("test"), &mut progress).await?;
+        let progress = downloader::DownloadProgress::new();
+        let (transmitter,reciever) = tokio::sync::watch::channel(progress);
+        let (downloadresult, _) = tokio::join!(downloader::download(&parsed_args.url, Path::new("test"), transmitter), cli::display_progress(reciever));
+        downloadresult?;
     } 
     Ok(())
 }    

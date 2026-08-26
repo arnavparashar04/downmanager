@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-use crate::error::Error;
+use crate::{downloader::{self, DownloadStatus}, error::Error};
+use std::io::{self, Write};
 
 pub struct Arguments{
     pub url : String,
@@ -49,5 +50,19 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
         }),
 
         _ => Err(Error::InvalidArguments),
+    }
+}
+
+pub async fn display_progress(mut reciever : tokio::sync::watch::Receiver<downloader::DownloadProgress>){
+    loop{
+        if reciever.changed().await.is_err(){
+            break;
+        }
+        let progress = reciever.borrow_and_update();
+        print!("\rDownloaded: {} | Status: {:?}",progress.downloaded_size,progress.status);
+        io::stdout().flush().unwrap();
+        if progress.status == downloader::DownloadStatus::Completed || progress.status == downloader::DownloadStatus::Failed{
+            break;
+        }
     }
 }

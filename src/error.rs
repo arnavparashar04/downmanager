@@ -11,6 +11,7 @@ pub enum Error {
    TempNotFound,
    TerminalSize,
    File(std::io::Error),
-   NetworkStatus(reqwest::StatusCode)
+   NetworkStatus(reqwest::StatusCode),
+   Channel
 }
 
