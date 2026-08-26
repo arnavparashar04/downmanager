@@ -13,8 +13,11 @@ async fn main() -> Result<(), error::Error> {
     if parsed_args.version {
         println!("{}", VERSION);
     }
+
+    let mut progress = downloader::DownloadProgress::new();
+
     if !parsed_args.url.is_empty(){
-        downloader::download(&parsed_args.url, Path::new("test")).await?;
+        downloader::download(&parsed_args.url, Path::new("test"), &mut progress).await?;
     } 
     Ok(())
 }    
