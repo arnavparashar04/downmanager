@@ -19,6 +19,7 @@ async fn main() -> Result<(), error::Error> {
         let (transmitter,reciever) = tokio::sync::watch::channel(progress);
         let (downloadresult, _) = tokio::join!(downloader::download(&parsed_args.url, Path::new("test"), transmitter), cli::display_progress(reciever));
         downloadresult?;
-    } 
+    }
+    print!("\n");
     Ok(())
 }    
