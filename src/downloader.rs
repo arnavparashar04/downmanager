@@ -1,9 +1,9 @@
-use std::path::Path;
 use futures_util::StreamExt;
 use std::io::Write;
 use crate::http;
 use std::time::Instant;
 use crate::error::Error;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct DownloadProgress{
@@ -40,10 +40,26 @@ impl DownloadProgress{
 }
 
 fn init_file(dest: &Path) -> Result<std::fs::File, Error>{
-    let fileout = std::fs::File::create_new(dest).map_err(Error::File)?;
-    Ok(fileout)
+    let mut count = 0;
+    let mut path = dest.to_path_buf();
+    loop{
+        match std::fs::File::create_new(&path) {
+            Ok(file) => return Ok(file),
+            Err(e) if e.kind() ==std::io::ErrorKind::AlreadyExists => {
+                count +=1;
+                let name = dest.file_stem().and_then(|s| s.to_str()).unwrap_or("Untitled");
+                let ext = dest.extension().and_then(|s| s.to_str());
+                let filename = match ext {
+                    Some(ext) => format!("{} ({}).{}", name, count, ext),
+                    None => format!("{} ({})", name, count),
+                };
+                path = dest.with_file_name(filename);
+            },
+            Err(e) => return Err(Error::File(e)),
+        }
+    }
 }
-pub async fn download(url: &str, out : &Path, transmitter: tokio::sync::watch::Sender<DownloadProgress>) -> Result<(), Error>{
+pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<DownloadProgress>) -> Result<(), Error>{
     let mut progress = DownloadProgress::new();
     transmitter.send(progress.clone()).map_err(|_| Error::Channel)?; //for connecting state
     let response = http::get(url).await?;
@@ -54,7 +70,8 @@ pub async fn download(url: &str, out : &Path, transmitter: tokio::sync::watch::S
     }
     progress.connections = 1;
     transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
-    let mut fileout = init_file(out)?;
+    let out = get_filename(&response, url)?;
+    let mut fileout = init_file(&out)?;
     download_stream(response, &mut fileout, &mut progress, &transmitter).await?; 
     Ok(())
 
@@ -79,4 +96,17 @@ async fn download_stream(response: reqwest::Response, fileout: &mut std::fs::Fil
     progress.connections = 0;
     transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
     Ok(())
+}
+
+fn get_filename(response: &reqwest::Response, url: &str) -> Result<PathBuf,Error>{
+    let content_diposition = response.headers().get(reqwest::header::CONTENT_DISPOSITION).and_then(|value| value.to_str().ok());
+    let filename = content_diposition.and_then(|value| value.split("filename=").nth(1)).map(|name| name.trim_matches('"'));
+    match filename {
+       Some(name) => Ok(PathBuf::from(name)),
+       None =>{
+           let url1 = reqwest::Url::parse(url).map_err(|_| Error::InvalidArguments)?; //other method
+           let filename1 = url1.path_segments().and_then(|segments| segments.last()).unwrap_or("Untitled");
+           Ok(PathBuf::from(filename1))
+       }
+    }    
 }
