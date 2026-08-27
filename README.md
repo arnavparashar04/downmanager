@@ -1,6 +1,6 @@
 # downmanager
 
-A simple command-line download manager written in Rust.
+A simple command-line download manager with multi connection download support.
 
 ## Tech Stack
 
@@ -38,5 +38,5 @@ Downloads in your current working directory
 ```
 
 ## Future features
-* Multi-connection downloads 
 * Download recovery/resuming 
+* Expand into a torrent client
