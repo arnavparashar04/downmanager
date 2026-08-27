@@ -12,6 +12,7 @@ pub enum Error {
    TerminalSize,
    File(std::io::Error),
    NetworkStatus(reqwest::StatusCode),
-   Channel
+   Channel,
+   NoRangeSupport
 }
 
