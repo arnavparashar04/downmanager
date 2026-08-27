@@ -4,7 +4,7 @@ mod error;
 mod http;
 use std::path::Path; 
 
-const VERSION : &str = "1.4.0";
+const VERSION : &str = "1.5.0";
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
@@ -12,6 +12,9 @@ async fn main() -> Result<(), error::Error> {
     let parsed_args : cli::Arguments = cli::parse_args(&args)?;
     if parsed_args.version {
         println!("{}", VERSION);
+    }
+    if parsed_args.help{
+        println!("Download Manager\n--version -> Print version\n--help -> Print this help message \n--recover -> Look for recoverable files and start recovering the download\ndownmanager <URL> -> To download the file in the url");
     }
 
     if !parsed_args.url.is_empty(){
