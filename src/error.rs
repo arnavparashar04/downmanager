@@ -13,6 +13,7 @@ pub enum Error {
    File(std::io::Error),
    NetworkStatus(reqwest::StatusCode),
    Channel,
-   NoRangeSupport
+   NoRangeSupport,
+   RateLimited
 }
 

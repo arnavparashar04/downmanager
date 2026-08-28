@@ -64,7 +64,7 @@ async fn init_file(dest: &Path) -> Result<tokio::fs::File, Error>{
 pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<DownloadProgress>) -> Result<(), Error>{
     let mut progress = DownloadProgress::new();
     transmitter.send(progress.clone()).map_err(|_| Error::Channel)?; //for connecting state
-    let response = http::get(url).await?;
+    let (response,range_supportcheck2) = http::get(url).await?;
     progress.http_status = Some(response.status());
     progress.total_size = response.content_length(); 
     if !response.status().is_success(){
@@ -73,9 +73,9 @@ pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<Downloa
     let out = get_filename(&response, url)?;
     let mut fileout = init_file(&out).await?;
     let supports_ranges = response.headers().get(reqwest::header::ACCEPT_RANGES).and_then(|value| value.to_str().ok()).map(|value| value.eq_ignore_ascii_case("bytes")).unwrap_or(false);
-    match (progress.total_size, supports_ranges){
+    match (progress.total_size, supports_ranges, range_supportcheck2){
         
-        (Some(total_size), true) => {
+        (Some(total_size), true, true) => {
             
             fileout.set_len(total_size).await.map_err(Error::File)?;
             let fileout = fileout.into_std().await;
