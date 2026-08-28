@@ -8,6 +8,8 @@ A simple command-line download manager with multi connection download support.
 * **tokio** 
 * **reqwest**
 
+## NOTE
+This download manager only supports multi connection downloads on Unix like operating systems. Windows is not supported.
 ## Usage
 
 Build:
