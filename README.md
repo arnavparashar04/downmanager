@@ -24,12 +24,18 @@ To install globally (.cargo should be in your PATH):
 cargo install --path . --force
 ```
 
-Example:
+### Example:
 
+Downloads in your current working directory
 ```bash
 downmanager <URL>
 ```
-Downloads in your current working directory
+To force number of connections
+
+```bash
+downmanager <URL> --force <number of connections>
+```
+
 
 ## Options
 
