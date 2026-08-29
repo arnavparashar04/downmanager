@@ -8,7 +8,7 @@ use reqwest::Url;
 
 use crate::error::Error; 
 
-const VERSION : &str = "1.8.0";
+const VERSION : &str = "1.8.5";
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
@@ -24,7 +24,7 @@ async fn main() -> Result<(), error::Error> {
     if !parsed_args.url.is_empty(){
         let progress = downloader::DownloadProgress::new();
         let (transmitter,reciever) = tokio::sync::watch::channel(progress);
-        let (downloadresult, _) = tokio::join!(downloader::download(&parsed_args.url,transmitter), cli::display_progress(reciever));
+        let (downloadresult, _) = tokio::join!(downloader::download(&parsed_args.url,transmitter, &parsed_args.force_connection, &parsed_args.force_connections_no), cli::display_progress(reciever));
         downloadresult?;
     }
     print!("\n");

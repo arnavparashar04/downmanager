@@ -61,7 +61,7 @@ async fn init_file(dest: &Path) -> Result<tokio::fs::File, Error>{
         }
     }
 }
-pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<DownloadProgress>) -> Result<(), Error>{
+pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<DownloadProgress>, connections_forced : &bool, connections_forced_no: &Option<u32>) -> Result<(), Error>{
     let mut progress = DownloadProgress::new();
     transmitter.send(progress.clone()).map_err(|_| Error::Channel)?; //for connecting state
     let (response,range_supportcheck2) = http::get(url).await?;
@@ -72,15 +72,27 @@ pub async fn download(url: &str, transmitter: tokio::sync::watch::Sender<Downloa
     }
     let out = get_filename(&response, url)?;
     let mut fileout = init_file(&out).await?;
-    let supports_ranges = response.headers().get(reqwest::header::ACCEPT_RANGES).and_then(|value| value.to_str().ok()).map(|value| value.eq_ignore_ascii_case("bytes")).unwrap_or(false);
-    match (progress.total_size, supports_ranges, range_supportcheck2){
-        
+    let supports_ranges = response.headers().get(reqwest::header::ACCEPT_RANGES).and_then(|value| value.to_str().ok()).map(|value| value.eq_ignore_ascii_case("bytes")).unwrap_or(false);    
+    if *connections_forced == true && *connections_forced_no == Some(1 as u32){
+        progress.connections = 1;
+        transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
+        download_stream(response, &mut fileout, &mut progress, &transmitter).await?; 
+        return  Ok(());
+    }
+    match (progress.total_size, supports_ranges, range_supportcheck2){    
         (Some(total_size), true, true) => {
             
             fileout.set_len(total_size).await.map_err(Error::File)?;
             let fileout = fileout.into_std().await;
             let fileout = Arc::new(fileout);
-            let connections = split_connections(total_size, 4);//4 just for now
+            let mut cno : usize;
+            if(*connections_forced == true){
+                cno = connections_forced_no.unwrap() as usize;
+            }
+            else{
+                cno = 4; //default value
+            }
+            let connections = split_connections(total_size, cno);
             progress.connections = connections.len() as u8;
             transmitter.send(progress.clone()).map_err(|_| Error::Channel)?;
             let client = reqwest::Client::new();

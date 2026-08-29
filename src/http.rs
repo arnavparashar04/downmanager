@@ -11,8 +11,8 @@ pub async fn get(url: &str) -> Result<(reqwest::Response, bool), Error>{
 use tokio::time::{sleep, Duration};
 
 pub async fn getrange(url: &str,client: &reqwest::Client,start: u64,end: u64,) -> Result<reqwest::Response, Error> {
-    let mut delay = Duration::from_secs(1);
-    for _ in 0..5 {
+    let mut delay = Duration::from_secs(2);
+    for _ in 0..6 {
         let response = client
             .get(url)
             .header(

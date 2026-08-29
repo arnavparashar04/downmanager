@@ -10,6 +10,8 @@ pub struct Arguments{
     pub help : bool,
     pub version : bool,
     pub recover : bool,
+    pub force_connection : bool,
+    pub force_connections_no : Option<u32>
 }
 
 pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
@@ -22,6 +24,8 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
                     help: true,
                     version: false,
                     recover: false,
+                    force_connection: false,
+                    force_connections_no: None
                 });
             }
 
@@ -31,7 +35,9 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
                     dest_path: None,
                     help: false,
                     version: true,
-                    recover: false
+                    recover: false,
+                    force_connection: false,
+                    force_connections_no: None
                 });
             }
             "--recover" | "-r" => {
@@ -40,7 +46,9 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
                     dest_path: None,
                     help: false,
                     version: false,
-                    recover: true
+                    recover: true,
+                    force_connection: false,
+                    force_connections_no: None
                 }
                 )
             }
@@ -55,7 +63,10 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
             dest_path: None,
             help: false,
             version: false,
-            recover: false
+            recover: false,
+            force_connection: false,
+            force_connections_no: None
+
         }),
 
         3 => Ok(Arguments {
@@ -63,8 +74,22 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
             dest_path: Some(PathBuf::from(&args[2])),
             help: false,
             version: false,
-            recover: false
+            recover: false,
+            force_connection: false,
+            force_connections_no: None
         }),
+        4 => Ok(Arguments {
+            url: args[1].clone(),
+            dest_path: None,
+            help: false,
+            version: false,
+            recover: false,
+            force_connection: true,
+            force_connections_no: Some(args[3].parse().unwrap_or(1)as u32)
+
+        }),
+
+
 
         _ => Err(Error::InvalidArguments),
     }
