@@ -8,7 +8,7 @@ use reqwest::Url;
 
 use crate::error::Error; 
 
-const VERSION : &str = "1.8.5";
+const VERSION : &str = "1.8.6";
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {

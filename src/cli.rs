@@ -78,16 +78,18 @@ pub fn parse_args(args: &[String]) -> Result<Arguments, Error> {
             force_connection: false,
             force_connections_no: None
         }),
-        4 => Ok(Arguments {
+        4 => {if args[2].as_str() == "--force"{Ok(Arguments {
             url: args[1].clone(),
             dest_path: None,
             help: false,
             version: false,
             recover: false,
             force_connection: true,
-            force_connections_no: Some(args[3].parse().unwrap_or(1)as u32)
-
-        }),
+            force_connections_no: Some(args[3].parse().unwrap_or(1)as u32)})}
+            else {
+                Err(Error::InvalidArguments)
+            }
+        },
 
 
 
