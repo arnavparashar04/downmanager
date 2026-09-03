@@ -2,6 +2,7 @@ mod cli;
 mod downloader;
 mod error;
 mod http;
+mod recover;
 
 
 use reqwest::Url;
@@ -19,6 +20,15 @@ async fn main() -> Result<(), error::Error> {
     }
     if parsed_args.help{
         println!("Download Manager\n--version -> Print version\n--help -> Print this help message \n--recover -> Look for recoverable files and start recovering the download\ndownmanager <URL> -> To download the file in the url");
+    }
+
+    if parsed_args.recover{
+        if recover::recoveryexists(){
+            println!("recovering...");
+        }
+        else {
+            println!("Recovery file does not exist in current working directory\nExiting....");
+        };
     }
 
     if !parsed_args.url.is_empty(){
