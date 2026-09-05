@@ -264,3 +264,18 @@ fn parse_content_range(value: &str) -> Result<(u64, u64, u64), Error> {
     let total = total.parse::<u64>().map_err(|_| Error::InvalidArguments)?;
     Ok((start, end, total))
 }
+
+struct ConnectionStatus{
+    id: usize,
+    start: u64,
+    end: u64,
+    downloaded: u64,
+}
+
+pub struct RecoveryStatus{
+   url: String,
+   connections: Vec<ConnectionStatus>,
+}
+
+
+
